@@ -18,7 +18,7 @@ GOOGLE_API_KEY = os.environ['GOOGLE_API_KEY']
 genai.configure(api_key=GOOGLE_API_KEY)
 
 # Select the Gemini model - using 'gemini-2.0-flash' as a general-purpose model
-MODEL_NAME = 'gemini-2.0-flash' # or other model
+MODEL_NAME = 'gemini-1.5-flash' # or other model
 gen_model = genai.GenerativeModel(MODEL_NAME)
 
 # Set up Streamlit app
