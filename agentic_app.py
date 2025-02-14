@@ -4,31 +4,31 @@ import pandas as pd
 import plotly.graph_objects as go
 import os
 import json
+import base64
 from datetime import datetime, timedelta
 from tempfile import NamedTemporaryFile
 from phi.agent import Agent
 from phi.model.google import Gemini
 from phi.tools.tavily import TavilyTools
 from constants import SYSTEM_PROMPT, INSTRUCTIONS
-import base64
 
-# Streamlit Page Config (Must be first Streamlit command)
+# Streamlit Page Config
 st.set_page_config(page_title="AI-Powered Technical Stock Analysis Dashboard", layout="wide")
 
 # API Keys (Ensure secure storage in production)
 os.environ['TAVILY_API_KEY'] = st.secrets['TAVILY_API_KEY']
 os.environ['GOOGLE_API_KEY'] = st.secrets['GOOGLE_API_KEY']
 
-# Initialize AI Agent with Tavily tools
-@st.cache_resource
-def get_agent():
-    return Agent(
+# Initialize AI Agent and store in session state
+if "agent" not in st.session_state:
+    st.session_state["agent"] = Agent(
         model=Gemini(id="gemini-2.0-flash-exp"),
         system_prompt=SYSTEM_PROMPT,
         instructions=INSTRUCTIONS,
         tools=[TavilyTools(api_key=os.getenv("TAVILY_API_KEY"))],
         markdown=True,
     )
+agent = st.session_state["agent"]
 
 # Streamlit UI
 st.title("AI-Powered Technical Stock Analysis Dashboard")
@@ -66,7 +66,6 @@ if st.sidebar.button("Fetch Data"):
 
 # Ensure Data is Available Before Analysis
 if "stock_data" in st.session_state and st.session_state["stock_data"]:
-    agent = get_agent()
     tab_names = ["Overall Summary"] + list(st.session_state["stock_data"].keys())
     tabs = st.tabs(tab_names)
     overall_results = []
@@ -102,11 +101,14 @@ if "stock_data" in st.session_state and st.session_state["stock_data"]:
             image_bytes = f.read()
         os.remove(tmpfile_path)
 
+        # Convert image bytes to base64 before passing to agent.run()
+        image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
         # AI Analysis with Tavily-enhanced insights
         with st.spinner(f'Analyzing {ticker}...'):
             response = agent.run(
                 f"Analyze the stock chart for {ticker} and provide insights on trends, signals, and patterns.",
-                images=[image_bytes]
+                images=[{"mime_type": "image/png", "data": image_base64}]
             )
         
         return fig, response.content
