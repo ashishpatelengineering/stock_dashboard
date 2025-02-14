@@ -10,6 +10,7 @@ from phi.agent import Agent
 from phi.model.google import Gemini
 from phi.tools.tavily import TavilyTools
 from constants import SYSTEM_PROMPT, INSTRUCTIONS
+import base64
 
 # Streamlit Page Config (Must be first Streamlit command)
 st.set_page_config(page_title="AI-Powered Technical Stock Analysis Dashboard", layout="wide")
